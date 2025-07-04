@@ -14,7 +14,7 @@ func Tasks(limit int) ([]*Task, error) {
 	defer rows.Close()
 	for rows.Next() {
 		var (
-			id      int
+			id      int64
 			title   string
 			comment string
 			date    string
