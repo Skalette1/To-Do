@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -68,4 +69,38 @@ func NextDate(now time.Time, dstart, repeat string) (string, error) {
 	}
 
 	return data.Format("20060102"), nil
+}
+
+func NextDateHandler(w http.ResponseWriter, r *http.Request) {
+	now := r.FormValue("now")
+	date := r.FormValue("date")
+	repeat := r.FormValue("repeat")
+
+	if date == "" || repeat == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("Bad Request"))
+		return
+	}
+
+	var nowStr time.Time
+	if now == "" {
+		nowStr = time.Now()
+	} else {
+		var err error
+		nowStr, err = time.Parse("20060102", now)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("Invalid now date format"))
+			return
+		}
+	}
+
+	response, err := NextDate(nowStr, date, repeat)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Server Error"))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Write([]byte(response))
 }

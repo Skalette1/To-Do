@@ -1,12 +1,13 @@
 package api
 
 import (
-	"encoding/json"
+	"final-project/pkg/utils"
 	"final-project/pkg/db"
+	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"time"
+	"log"
 )
 
 func AddTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +32,7 @@ func AddTaskHandler(w http.ResponseWriter, r *http.Request) {
 		task.Date = now.Format("20060102")
 	}
 	if task.Repeat != "" {
-		nDate, err := NextDate(now, task.Date, task.Repeat)
+		nDate, err := utils.NextDate(now, task.Date, task.Repeat)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			w.Write([]byte("Error getting next date"))
@@ -125,7 +126,7 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		task.Date = now.Format("20060102")
 	}
 	if task.Repeat != "" {
-		nDate, err := NextDate(now, task.Date, task.Repeat)
+		nDate, err := utils.NextDate(now, task.Date, task.Repeat)
 		if err != nil {
 			http.Error(w, "Error calculating next date", http.StatusInternalServerError)
 			return

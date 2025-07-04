@@ -1,15 +1,17 @@
 package api
 
 import (
+	"final-project/pkg/utils"
 	"net/http"
 )
 
 func Init() {
-	http.HandleFunc("/api/nextdate", NextDateHandler)
+	http.HandleFunc("/api/nextdate", utils.NextDateHandler)
 	http.HandleFunc("/api/task", TaskRouter)
 	http.HandleFunc("/api/tasks", GetTasksHandler)
 	http.HandleFunc("/api/task/done", DoneTaskHandler)
 }
+
 func TaskRouter(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:

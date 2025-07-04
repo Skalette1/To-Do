@@ -15,21 +15,21 @@ func Tasks(limit int) ([]*Task, error) {
 	for rows.Next() {
 		var (
 			id      int64
+			date    string
 			title   string
 			comment string
-			date    string
 			repeat  string
 		)
-		err := rows.Scan(&id, &title, &comment, &date, &repeat)
+		err := rows.Scan(&id, &date, &title, &comment, &repeat)
 		if err != nil {
 			return nil, errors.New("error scanning task")
 		}
 		task := &Task{
-			id,
-			date,
-			title,
-			comment,
-			repeat,
+			ID:      id,
+			Date:    date,
+			Title:   title,
+			Comment: comment,
+			Repeat:  repeat,
 		}
 		tasks = append(tasks, task)
 	}

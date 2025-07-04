@@ -31,7 +31,8 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	if tasks == nil {
 		tasks = []*db.Task{}
 	}
-	writeJson(w, TaskResp{
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	json.NewEncoder(w).Encode(TaskResp{
 		Tasks: tasks,
 	})
 }
