@@ -1,14 +1,31 @@
 package api
 
 import (
-	"final-project/pkg/utils"
-	"final-project/pkg/db"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
+	"final-project/pkg/db"
+	"final-project/pkg/utils"
 	"io/ioutil"
-	"net/http"
-	"time"
 	"log"
+	"net/http"
+	"os"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
 )
+
+var jwtSecret []byte
+
+func getJWTSecret() []byte {
+	if jwtSecret != nil {
+		return jwtSecret
+	}
+	pass := os.Getenv("TODO_PASSWORD")
+	hash := sha256.Sum256([]byte(pass))
+	jwtSecret = hash[:]
+	return jwtSecret
+}
 
 func AddTaskHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -51,10 +68,10 @@ func AddTaskHandler(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Error adding task"))
 		return
 	}
-	writeJson(w, id)
+	toJson(w, id)
 }
 
-func writeJson(w http.ResponseWriter, data any) {
+func toJson(w http.ResponseWriter, data any) {
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
 	json.NewEncoder(w).Encode(data)
 }
@@ -71,7 +88,7 @@ func GetTasksHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error getting tasks", http.StatusInternalServerError)
 		return
 	}
-	writeJson(w, map[string]interface{}{"tasks": tasks})
+	toJson(w, map[string]interface{}{"tasks": tasks})
 }
 
 func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +108,7 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	writeJson(w, task)
+	toJson(w, task)
 }
 
 func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +159,7 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error updating task: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	writeJson(w, map[string]string{"status": "updated"})
+	toJson(w, map[string]string{"status": "updated"})
 }
 
 func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
@@ -163,9 +180,49 @@ func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJson(w, map[string]string{"status": "deleted"})
+	toJson(w, map[string]string{"status": "deleted"})
 }
 
 func DoneTaskHandler(w http.ResponseWriter, r *http.Request) {
 	db.DoneTask(w, r)
+}
+
+func SignInHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Method not allowed"})
+		return
+	}
+	var req struct {
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request"})
+		return
+	}
+	pass := os.Getenv("TODO_PASSWORD")
+	if pass == "" || req.Password != pass {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Неверный пароль"})
+		return
+	}
+
+	now := time.Now().UTC()
+	exp := now.Add(8 * time.Hour)
+
+	hash := sha256.Sum256([]byte(pass))
+	claims := jwt.MapClaims{
+		"hash": hex.EncodeToString(hash[:]),
+		"iat":  jwt.NewNumericDate(now),
+		"exp":  jwt.NewNumericDate(exp),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenStr, err := token.SignedString(getJWTSecret())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Ошибка генерации токена"})
+		return
+	}
+	json.NewEncoder(w).Encode(map[string]string{"token": tokenStr})
 }

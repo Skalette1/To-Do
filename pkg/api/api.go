@@ -1,15 +1,17 @@
 package api
 
 import (
+	"final-project/internal/auth"
 	"final-project/pkg/utils"
 	"net/http"
 )
 
 func Init() {
 	http.HandleFunc("/api/nextdate", utils.NextDateHandler)
-	http.HandleFunc("/api/task", TaskRouter)
-	http.HandleFunc("/api/tasks", GetTasksHandler)
-	http.HandleFunc("/api/task/done", DoneTaskHandler)
+	http.HandleFunc("/api/task", auth.Middleware(TaskRouter))
+	http.HandleFunc("/api/tasks", auth.Middleware(GetTasksHandler))
+	http.HandleFunc("/api/task/done", auth.Middleware(DoneTaskHandler))
+	http.HandleFunc("/api/signin", SignInHandler)
 }
 
 func TaskRouter(w http.ResponseWriter, r *http.Request) {

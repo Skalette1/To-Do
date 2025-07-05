@@ -5,7 +5,9 @@ go 1.23.0
 toolchain go1.24.4
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/jmoiron/sqlx v1.4.0
+	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.10.0
 	modernc.org/sqlite v1.38.0
 )

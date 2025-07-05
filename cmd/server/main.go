@@ -7,9 +7,12 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	_ = godotenv.Load()
 	if err := db.Init("scheduler.db"); err != nil {
 		fmt.Println(err)
 	}
