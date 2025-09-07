@@ -1,6 +1,7 @@
 package main
 
 import (
+	"final-project/internal/metrics"
 	"final-project/internal/static"
 	"final-project/pkg/api"
 	"final-project/pkg/db"
@@ -17,6 +18,7 @@ func main() {
 		fmt.Println(err)
 	}
 	api.Init()
+	metrics.Init()
 	if err := static.Static(); err != nil {
 		fmt.Println(err)
 	}
